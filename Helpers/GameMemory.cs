@@ -26,35 +26,56 @@ using System.Text;
 using System.IO;
 using System.Security.Cryptography;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace MapAssist.Helpers
 {
     class GameMemory
     {
-        private static string processName = Encoding.UTF8.GetString(new byte[] { 68, 50, 82 });
-        public static IntPtr? ProcessHandle = null;
-        public static bool foundcheck = false;
-        public static IntPtr? SaveAddress = null;
-        public static IntPtr? CheckAddress = null;
+        private static string ProcessName = Encoding.UTF8.GetString(new byte[] { 68, 50, 82 });
+        private static IntPtr AdrPlayerUnit = IntPtr.Zero;
+        private static IntPtr PtrPlayerUnit = IntPtr.Zero;
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
 
         public static GameData GetGameData()
         {
+            var addressBuffer = new byte[8];
+            var dwordBuffer = new byte[4];
+            var byteBuffer = new byte[1];
+            var stringBuffer = new byte[16];
+
+            IntPtr processHandle = IntPtr.Zero;
             // Clean up and organize, add better exception handeling.
             try
             {
-                Process[] process = Process.GetProcessesByName(processName);
-                Process gameProcess = process.Length > 0 ? process[0] : null;
-                if (gameProcess == null)
+                uint processID = 0;
+                Process gameProcess;
+
+                IntPtr winHandle = GetForegroundWindow();
+                GetWindowThreadProcessId(winHandle, out processID);
+
+                if (processID != 0)
                 {
-                    ProcessHandle = null;
-                    return null;
+                    gameProcess = Process.GetProcessById(Convert.ToInt32(processID));
+                }
+                else
+                {
+                    Process[] process = Process.GetProcessesByName(ProcessName);
+                    gameProcess = process.Length > 0 ? process[0] : null;
                 }
 
-                if (ProcessHandle == null)
+                if (gameProcess == null)
                 {
-                    ProcessHandle =
-                        WindowsExternal.OpenProcess((uint)WindowsExternal.ProcessAccessFlags.VirtualMemoryRead, false, gameProcess.Id);
+                    throw new Exception("Game process not found.");
                 }
+
+                processHandle =
+                    WindowsExternal.OpenProcess((uint)WindowsExternal.ProcessAccessFlags.VirtualMemoryRead, false, gameProcess.Id);
                 IntPtr processAddress = gameProcess.MainModule.BaseAddress;
                 IntPtr pPlayerUnit = IntPtr.Add(processAddress, Offsets.PlayerUnit);
 
