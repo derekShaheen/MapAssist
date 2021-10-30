@@ -36,9 +36,6 @@ namespace MapAssist.Helpers
         private static IntPtr AdrPlayerUnit = IntPtr.Zero;
         private static IntPtr PtrPlayerUnit = IntPtr.Zero;
 
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
-
         public static GameData GetGameData()
         {
             var addressBuffer = new byte[8];
@@ -51,7 +48,7 @@ namespace MapAssist.Helpers
             try
             {
                 uint activeProcessID = 0;
-                Process gameProcess;
+                Process gameProcess = null;
 
                 IntPtr winHandle = WindowsExternal.GetForegroundWindow();
                 WindowsExternal.GetWindowThreadProcessId(winHandle, out activeProcessID);
