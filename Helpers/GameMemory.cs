@@ -36,9 +36,6 @@ namespace MapAssist.Helpers
         private static IntPtr AdrPlayerUnit = IntPtr.Zero;
         private static IntPtr PtrPlayerUnit = IntPtr.Zero;
 
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
-
         [DllImport("user32.dll", SetLastError = true)]
         private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
 
@@ -56,8 +53,8 @@ namespace MapAssist.Helpers
                 uint activeProcessID = 0;
                 Process gameProcess;
 
-                IntPtr winHandle = GetForegroundWindow();
-                GetWindowThreadProcessId(winHandle, out activeProcessID);
+                IntPtr winHandle = WindowsExternal.GetForegroundWindow();
+                WindowsExternal.GetWindowThreadProcessId(winHandle, out activeProcessID);
 
                 Process[] processList = Process.GetProcessesByName(ProcessName);
 
